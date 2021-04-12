@@ -20,12 +20,6 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryManualCoordinates() {
-		tryCity("0", "0", "Akra");
-		tryCity("40.5", "35", "Çorum");
-		tryCity("38.7", "28.8", "Manisa");
-	}
-
-	public void tryCity(String latitude, String longitude, String expectedCity) {
 
 	}
 
@@ -46,6 +40,7 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryGetEarthCenterDistance() {
-
 	}
+
+
 }
