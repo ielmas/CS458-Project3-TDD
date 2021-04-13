@@ -13,7 +13,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 class GpsTestApplicationTests {
 
 	public WebDriver webDriver;
-	public static String hostUrl = "";
+	public static String hostUrl = " buraya host url gir ";
 
 
 	@Before
@@ -52,17 +52,26 @@ class GpsTestApplicationTests {
 	}
 
 	@Test
-	void tryInvalidCoordinates() {
-
+	void tryInvalidCoordinates() throws InterruptedException {
+		tryInvalid("abc", "37.82", InvalidType.INVALID_LATITUDE);
+		tryInvalid("37.82", "abc", InvalidType.INVALID_LONGITUDE);
+		tryInvalid("", "45", InvalidType.INVALID_LATITUDE);
+		tryInvalid("0", "", InvalidType.INVALID_LONGITUDE);
+		tryInvalid("", "", InvalidType.INVALID_LATITUDE);
 	}
 
-	public void tryInvalid(String latitude, String longitude, InvalidType invalidType) {
+	public void tryInvalid(String latitude, String longitude, InvalidType invalidType) throws InterruptedException {
 		webDriver.findElement(By.id("coordinates")).clear();
-		webDriver.findElement(By.id("coordinates")).sendKeys(latitude, longitude);
+		webDriver.findElement(By.id("coordinates")).sendKeys(latitude + ", " + longitude);
 		webDriver.findElement(By.id("sendCoordinatesBtn")).click();
 
+		Thread.sleep(100L);
 
-
+		if (invalidType.equals(InvalidType.INVALID_LATITUDE)) {
+			Assert.assertEquals(webDriver.findElement(By.id("latitude_error")).getText(), "Latitude Value is not valid!");
+		} else {
+			Assert.assertEquals(webDriver.findElement(By.id("longitude_error")).getText(), "Longitude Value is not valid!");
+		}
 	}
 
 	@Test
@@ -77,8 +86,8 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryGetEarthCenterDistance() {
-	}
 
+	}
 
 	private enum InvalidType {
 		INVALID_LATITUDE, INVALID_LONGITUDE
