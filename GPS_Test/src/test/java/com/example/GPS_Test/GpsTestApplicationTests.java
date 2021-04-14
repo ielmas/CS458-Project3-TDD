@@ -1,9 +1,7 @@
 package com.example.GPS_Test;
 
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
-import org.junit.After;
 import org.junit.Assert;
-import org.junit.Before;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,7 +10,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.support.ui.ExpectedCondition;
-import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -36,60 +33,68 @@ class GpsTestApplicationTests {
 		webDriver.manage().window().maximize();
 		webDriver.get(hostUrl);
 		waiter = new WebDriverWait(webDriver, 10);
-		Thread.sleep(100L);
 	}
 
 	@AfterEach
 	void tearDown() throws InterruptedException {
-       // quit driver
+		// quit driver
 		Thread.sleep(250L);
 		webDriver.quit();
 	}
 
-//	@Test
-//	void tryManualCoordinates() throws InterruptedException {
-//		tryCity("37.82", "32.59", "Konya");
-//		tryCity("40.5", "35", "Çorum");
-//		tryCity("38.7", "28.8", "Manisa");
-//		tryCity("37.7", "27.1", "Aydın");
-//		tryCity("38.43", "26.84", "İzmir");
-//	}
-//
-//	public void tryCity(String latitude, String longitude, String expectedCity) throws InterruptedException {
-//		webDriver.findElement(By.id("coordinates")).clear();
-//		webDriver.findElement(By.id("coordinates")).sendKeys(latitude + ", " + longitude);
-//		webDriver.findElement(By.id("sendCoordinatesBtn")).click();
-//
-//		Thread.sleep(100L);
-//
-//		Assert.assertEquals(webDriver.findElement(By.id("city")).getText(), expectedCity);
-//	}
-//
-//	@Test
-//	void tryInvalidCoordinates() throws InterruptedException {
-//		tryInvalid("abc", "37.82", InvalidType.INVALID_LATITUDE);
-//		tryInvalid("37.82", "abc", InvalidType.INVALID_LONGITUDE);
-//		tryInvalid("", "45", InvalidType.INVALID_LATITUDE);
-//		tryInvalid("0", "", InvalidType.INVALID_LONGITUDE);
-//		tryInvalid("", "", InvalidType.INVALID_LATITUDE);
-//	}
-//
-//	public void tryInvalid(String latitude, String longitude, InvalidType invalidType) throws InterruptedException {
-//		webDriver.findElement(By.id("coordinates")).clear();
-//		webDriver.findElement(By.id("coordinates")).sendKeys(latitude + ", " + longitude);
-//		webDriver.findElement(By.id("sendCoordinatesBtn")).click();
-//
-//		Thread.sleep(100L);
-//
-//		if (invalidType.equals(InvalidType.INVALID_LATITUDE)) {
-//			Assert.assertEquals(webDriver.findElement(By.id("latitude_error")).getText(), "Latitude Value is not valid!");
-//		} else {
-//			Assert.assertEquals(webDriver.findElement(By.id("longitude_error")).getText(), "Longitude Value is not valid!");
-//		}
-//	}
+	@Test
+	void tryManualCoordinates() {
+		tryCity("37.82", "32.59", "Konya");
+		tryCity("40.5", "35", "Çorum");
+		tryCity("38.7", "28.8", "Manisa");
+		tryCity("37.7", "27.1", "Aydın");
+		tryCity("38.43", "26.84", "İzmir");
+	}
+
+	public void tryCity(String latitude, String longitude, String expectedCity) {
+		WebElement latlngElement = webDriver.findElement(By.id("latlng"));
+		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
+		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
+
+		String defaultCity = cityTextElement.getAttribute("value");
+
+		latlngElement.clear();
+		latlngElement.sendKeys(latitude + ", " + longitude);
+
+		getCurCityBtn.click();
+
+		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
+
+		Assert.assertEquals(cityTextElement.getAttribute("value"), expectedCity);
+	}
 
 	@Test
-	void tryGetCurrentCoordinates() throws InterruptedException {
+	void tryInvalidCoordinates() throws InterruptedException {
+		tryInvalid("abc", "37.82", InvalidType.INVALID_LATITUDE);
+		tryInvalid("37.82", "abc", InvalidType.INVALID_LONGITUDE);
+		tryInvalid("", "45", InvalidType.INVALID_LATITUDE);
+		tryInvalid("0", "", InvalidType.INVALID_LONGITUDE);
+		tryInvalid("", "", InvalidType.INVALID_LATITUDE);
+	}
+
+	public void tryInvalid(String latitude, String longitude, InvalidType invalidType) throws InterruptedException {
+		WebElement latLngElement = webDriver.findElement(By.id("coordinates"));
+		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
+
+		latLngElement.clear();
+		latLngElement.sendKeys(latitude + ", " + longitude);
+
+		getCurCityBtn.click();
+
+		if (invalidType.equals(InvalidType.INVALID_LATITUDE)) {
+			Assert.assertEquals(webDriver.findElement(By.id("latitude_error")).getAttribute("value"), "Latitude Value is not valid!");
+		} else {
+			Assert.assertEquals(webDriver.findElement(By.id("longitude_error")).getAttribute("value"), "Longitude Value is not valid!");
+		}
+	}
+
+	@Test
+	void tryGetCurrentCoordinates() {
 		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
 		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
 		String defaultLatLng = latLngTextElement.getAttribute("value");
