@@ -1,14 +1,17 @@
 package com.example.GPS_Test;
 
+import java.util.HashMap;
+import java.util.Map;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assert;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -16,27 +19,35 @@ import org.springframework.boot.test.context.SpringBootTest;
 @SpringBootTest
 class GpsTestApplicationTests {
 
-	private WebDriver webDriver;
-	private WebDriverWait waiter;
-	private String hostUrl = "C:\\Users\\OrduLou\\Documents\\Üniversite\\cs458\\projects\\projects3\\ApplicationLogic\\src\\index.html";
+	private static WebDriver webDriver;
+	private static WebDriverWait waiter;
+
+	private static String hostUrl = "C:\\Users\\OrduLou\\Documents\\Üniversite\\cs458\\projects\\projects3\\ApplicationLogic\\src\\index.html";
+	//private static String hostUrl =  "file:///Users/admin/workspace/TestProject3/src/index.html";
 
 	private final String realCity = "İstanbul";
 	private final double realLat = 40.9829376;
 	private final double realLng = 28.734259199999997;
 	private final double epsilon = 0.00000001;
 
-	@BeforeEach
-	void setup() throws InterruptedException {
+	@BeforeAll
+	static void setup() {
 		// init driver
+		HashMap<String, Object> prefs = new HashMap<>();
+		prefs.put("profile.default_content_setting_values.geolocation", 1); // 1:allow 2:block
+
+		ChromeOptions options = new ChromeOptions();
+		options.setExperimentalOption("prefs", prefs);
+
 		System.setProperty("webdriver.chrome.driver", "src/test/java/com/example/GPS_Test/chromedriver_windows/chromedriver.exe");
-		webDriver = new ChromeDriver();
+		webDriver = new ChromeDriver(options);
 		webDriver.manage().window().maximize();
 		webDriver.get(hostUrl);
-		waiter = new WebDriverWait(webDriver, 10);
+		waiter = new WebDriverWait(webDriver, 20);
 	}
 
-	@AfterEach
-	void tearDown() throws InterruptedException {
+	@AfterAll
+	static void tearDown() throws InterruptedException {
 		// quit driver
 		Thread.sleep(250L);
 		webDriver.quit();
@@ -47,7 +58,7 @@ class GpsTestApplicationTests {
 		tryCity("37.82", "32.59", "Konya");
 		tryCity("40.5", "35", "Çorum");
 		tryCity("38.7", "28.8", "Manisa");
-		tryCity("37.7", "27.1", "Aydın");
+		tryCity("37.77", "27.15", "Aydın");
 		tryCity("38.43", "26.84", "İzmir");
 	}
 
@@ -98,7 +109,6 @@ class GpsTestApplicationTests {
 		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
 		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
 		String defaultLatLng = latLngTextElement.getAttribute("value");
-
 
 		getCurLocBut.click();
 		// waiting until the latitude and longtitude is calculated
