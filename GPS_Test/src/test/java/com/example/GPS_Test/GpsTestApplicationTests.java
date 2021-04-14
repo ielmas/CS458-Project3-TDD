@@ -6,6 +6,7 @@ import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -13,6 +14,7 @@ import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
+import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.springframework.boot.test.context.SpringBootTest;
 
@@ -26,9 +28,13 @@ class GpsTestApplicationTests {
 	//private static String hostUrl =  "file:///Users/admin/workspace/TestProject3/src/index.html";
 
 	private final String realCity = "İstanbul";
+	private final double realDistanceToIstanbulCenter = 20701.604472640214;
 	private final double realLat = 40.9829376;
 	private final double realLng = 28.734259199999997;
 	private final double epsilon = 0.00000001;
+	private final double realDstToEarthCenter = 6369044.824489601;
+
+
 
 	@BeforeAll
 	static void setup() {
@@ -46,6 +52,8 @@ class GpsTestApplicationTests {
 		waiter = new WebDriverWait(webDriver, 20);
 	}
 
+
+
 	@AfterAll
 	static void tearDown() throws InterruptedException {
 		// quit driver
@@ -55,6 +63,7 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryManualCoordinates() {
+		clearThePage();
 		tryCity("37.82", "32.59", "Konya");
 		tryCity("40.5", "35", "Çorum");
 		tryCity("38.7", "28.8", "Manisa");
@@ -81,6 +90,7 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryInvalidCoordinates() throws InterruptedException {
+		clearThePage();
 		tryInvalid("abc", "37.82", InvalidType.INVALID_LATITUDE);
 		tryInvalid("37.82", "abc", InvalidType.INVALID_LONGITUDE);
 		tryInvalid("", "45", InvalidType.INVALID_LATITUDE);
@@ -89,6 +99,7 @@ class GpsTestApplicationTests {
 	}
 
 	public void tryInvalid(String latitude, String longitude, InvalidType invalidType) throws InterruptedException {
+		clearThePage();
 		WebElement latLngElement = webDriver.findElement(By.id("coordinates"));
 		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
 
@@ -106,6 +117,7 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryGetCurrentCoordinates() {
+		clearThePage();
 		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
 		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
 		String defaultLatLng = latLngTextElement.getAttribute("value");
@@ -121,40 +133,120 @@ class GpsTestApplicationTests {
 
 	@Test
 	void tryGetNearestCityDistanceWithCurrentCoordinates() {
+		clearThePage();
 		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
-		WebElement getCurrCityBut = webDriver.findElement(By.id("reverse-geocode"));
-		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
+		WebElement getNearestCityBut = webDriver.findElement(By.id("city-current-distance"));
+		WebElement nearestCityTextElement = webDriver.findElement(By.id("city-center-dist"));
 		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
 
-		String defaultCity = cityTextElement.getAttribute("value");
+		String defaultDistance = nearestCityTextElement.getAttribute("value");
 		String defaultLatLng = latLngTextElement.getAttribute("value");
 
 		getCurLocBut.click();
 		// waiting until the latitude and longtitude is calculated
 		waiter.until(createConditionForValueChange(By.id("latlng"), defaultLatLng));
 
-		getCurrCityBut.click();
+		getNearestCityBut.click();
 		// waiting until city is shown on the page
-		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
+		waiter.until(createConditionForValueChange(By.id("city-center-dist"), defaultDistance));
 
-		String cityOnPage = cityTextElement.getAttribute("value");
-		boolean cityIsCorrect = realCity.equals(cityOnPage);
-		Assert.assertTrue("City: " + cityOnPage,cityIsCorrect);
-	}
-
-	@Test
-	void tryGetNearestCityDistanceWithManuelCoordinates() {
-
+		String distanceOnPageStr = nearestCityTextElement.getAttribute("value");
+		double distanceOnPage = Double.parseDouble(distanceOnPageStr.substring(0, distanceOnPageStr.indexOf(' ')));
+		boolean distanceIsCorrect = Math.abs(distanceOnPage - realDistanceToIstanbulCenter) < epsilon;
+		Assert.assertTrue("Distance to city center: " + distanceOnPage, distanceIsCorrect);
 	}
 
 	@Test
 	void tryGetEarthCenterDistanceWithCurrenCoordinates() {
+		clearThePage();
+		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
+		WebElement getDstToEarctCenterBut = webDriver.findElement(By.id("earth-center-dist-btn"));
+		WebElement earthCenterDistanceTextElement = webDriver.findElement(By.id("earth-center-dist-text"));
+		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
 
+		String defaultCenterDistance = earthCenterDistanceTextElement.getAttribute("value");
+		String defaultLatLng = latLngTextElement.getAttribute("value");
+
+		getCurLocBut.click();
+		// waiting until the latitude and longtitude is calculated.
+		waiter.until(createConditionForValueChange(By.id("latlng"), defaultLatLng));
+
+		getDstToEarctCenterBut.click();
+
+		// waiting until the distance is calculated.
+		waiter.until(createConditionForValueChange(By.id("earth-center-dist-text"), defaultCenterDistance));
+
+		String distanceOnPageStr = earthCenterDistanceTextElement.getAttribute("value");
+		double distanceOnPage = Double.parseDouble(distanceOnPageStr);
+
+		boolean diffIsIgnorable = Math.abs(distanceOnPage - realDstToEarthCenter) < epsilon;
+
+		Assert.assertTrue(diffIsIgnorable);
 	}
 
+//	@Test
+//	void tryGetNearestCityDistanceWithManuelCoordinates() {
+//		tryNearestCityManuel("...", ".....");
+//		tryNearestCityManuel("...", ".....");
+//		tryNearestCityManuel("...", ".....");
+//		tryNearestCityManuel("...", ".....");
+//	}
+
+//	private void tryNearestCityManuel(String lat, String lng){
+//		clearThePage();
+//		WebElement latLngInputArea = webDriver.findElement(By.id("latlng"));
+//		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
+//
+//
+//		String defaultCity = cityTextElement.getAttribute("value");
+//
+//
+//		getCurrCityBut.click();
+//		// waiting until city is shown on the page
+//		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
+//
+//		String cityOnPage = cityTextElement.getAttribute("value");
+//		boolean cityIsCorrect = realCity.equals(cityOnPage);
+//		Assert.assertTrue("City: " + cityOnPage,cityIsCorrect);
+//	}
+//
+//
 	@Test
 	void tryGetEarthCenterDistanceWithManuelCoordinates() {
+		tryEarthCenterDistanceManuel("37.82", "32.59", 6371142.175960994);
+		tryEarthCenterDistanceManuel("40.5", "35", 6370111.971642147);
+		tryEarthCenterDistanceManuel("38.7", "28.8", 6370566.660799777);
+		tryEarthCenterDistanceManuel("37.77", "27.15", 6369951.54910314);
+		tryEarthCenterDistanceManuel("38.43", "26.84", 6369863.888128061);
+	}
 
+	private void tryEarthCenterDistanceManuel(String lat, String lng, double distanceToEarthCenter){
+		clearThePage();
+		WebElement getDstToEarctCenterBut = webDriver.findElement(By.id("earth-center-dist-btn"));
+		WebElement earthCenterDistanceTextElement = webDriver.findElement(By.id("earth-center-dist-text"));
+		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
+
+		String defaultCenterDistance = earthCenterDistanceTextElement.getAttribute("value");
+
+		latLngTextElement.clear();
+		latLngTextElement.sendKeys(lat+"," +lng);
+
+		getDstToEarctCenterBut.click();
+		// waiting until the latitude and longtitude is calculated.
+		waiter.until(createConditionForValueChange(By.id("earth-center-dist-text"), defaultCenterDistance));
+
+
+		String distanceOnPageStr = earthCenterDistanceTextElement.getAttribute("value");
+		double distanceOnPage = Double.parseDouble(distanceOnPageStr);
+
+		boolean diffIsIgnorable = Math.abs(distanceOnPage - distanceToEarthCenter) < epsilon;
+
+		Assert.assertTrue(diffIsIgnorable);
+	}
+
+	static void clearThePage(){
+		webDriver.get(hostUrl);
+		waiter.until(ExpectedConditions.presenceOfElementLocated(By.id("getCurLoc")));
 	}
 
 	private ExpectedCondition<Boolean> createConditionForValueChange(By locator, String oldValue){
