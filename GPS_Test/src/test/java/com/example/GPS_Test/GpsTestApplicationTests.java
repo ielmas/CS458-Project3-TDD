@@ -117,6 +117,33 @@ class GpsTestApplicationTests {
 	}
 
 	@Test
+	void tryNearestCityWithSeaCoordinates(){
+		trySeaCoordinates("37.4", "19.6", "There is no city");
+		trySeaCoordinates("44.203099933665044", "-34.50106282087862", "");
+		trySeaCoordinates("43.608459936060044","-37.20369953962862", "");
+		trySeaCoordinates("33.20840421649107","29.52684444782201", "There is no city");
+		trySeaCoordinates("0","0", "There is no city");
+		trySeaCoordinates("90","0", "There is no city");
+	}
+
+	private void trySeaCoordinates(String latitude, String longitude, String expectedText){
+		clearThePage();
+		WebElement latlngElement = webDriver.findElement(By.id("latlng"));
+		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
+		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
+
+		String defaultCity = cityTextElement.getAttribute("value");
+
+		latlngElement.clear();
+		latlngElement.sendKeys(latitude + ", " + longitude);
+
+		getCurCityBtn.click();
+
+		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
+
+		Assert.assertEquals(cityTextElement.getAttribute("value"), expectedText);
+	}
+	@Test
 	void tryGetCurrentCoordinates() {
 		clearThePage();
 		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
@@ -224,8 +251,18 @@ class GpsTestApplicationTests {
 		tryNearestCityManuel("37.82", "32.59", 10462.844570284435);
 		tryNearestCityManuel("40.5", "35", 6798.574666380996);
 		tryNearestCityManuel("38.7", "28.8", 119513.7991236266);
-		tryNearestCityManuel("37.77", "27.15", 117654.13008119793);
+		tryNearestCityManuel("37.77", "27.15", 61644.51041191391);
 		tryNearestCityManuel("38.43", "26.84", 26418.024861855563);
+	}
+
+
+	@Test
+	void tryGetEarthCenterDistanceWithManuelCoordinates() {
+		tryEarthCenterDistanceManuel("37.82", "32.59", 6371142.175960994);
+		tryEarthCenterDistanceManuel("40.5", "35", 6370111.971642147);
+		tryEarthCenterDistanceManuel("38.7", "28.8", 6370566.660799777);
+		tryEarthCenterDistanceManuel("37.77", "27.15", 6369951.54910314);
+		tryEarthCenterDistanceManuel("38.43", "26.84", 6369863.888128061);
 	}
 
 	private void tryNearestCityManuel(String lat, String lng, double realDistanceToCityCenter){
@@ -254,19 +291,9 @@ class GpsTestApplicationTests {
 		String distanceOnPageStr = nearestCityTextElement.getAttribute("value");
 		double distanceOnPage = Double.parseDouble(distanceOnPageStr.substring(0, distanceOnPageStr.indexOf(' ')));
 
-		System.out.println("distance: "  + distanceOnPage);
+
 		boolean distanceIsCorrect = Math.abs(distanceOnPage - realDistanceToCityCenter) < epsilon;
 		Assert.assertTrue("Distance to city center: " + distanceOnPage, distanceIsCorrect);
-	}
-
-
-	@Test
-	void tryGetEarthCenterDistanceWithManuelCoordinates() {
-		tryEarthCenterDistanceManuel("37.82", "32.59", 6371142.175960994);
-		tryEarthCenterDistanceManuel("40.5", "35", 6370111.971642147);
-		tryEarthCenterDistanceManuel("38.7", "28.8", 6370566.660799777);
-		tryEarthCenterDistanceManuel("37.77", "27.15", 6369951.54910314);
-		tryEarthCenterDistanceManuel("38.43", "26.84", 6369863.888128061);
 	}
 
 	private void tryEarthCenterDistanceManuel(String lat, String lng, double distanceToEarthCenter){
