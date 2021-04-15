@@ -1,12 +1,10 @@
 package com.example.GPS_Test;
 
 import java.util.HashMap;
-import java.util.Map;
 import org.checkerframework.checker.nullness.compatqual.NullableDecl;
 import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
@@ -17,9 +15,11 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedCondition;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+import org.springframework.boot.SpringBootConfiguration;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
+@SpringBootConfiguration
 class GpsTestApplicationTests {
 
 	private static WebDriver webDriver;
