@@ -8,6 +8,7 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.openqa.selenium.Alert;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
@@ -130,12 +131,45 @@ class GpsTestApplicationTests {
 		checkLatLng(latLngOnPage);
 	}
 
-
 	@Test
-	void tryGetNearestCityDistanceWithCurrentCoordinates() {
+	void tryGetNearestCityDistanceWithCurrentCoordinates() throws InterruptedException {
 		clearThePage();
 		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
-		WebElement getNearestCityBut = webDriver.findElement(By.id("city-current-distance"));
+		WebElement getNearestCityCenterDistanceBut = webDriver.findElement(By.id("city-current-distance"));
+		WebElement nearestCityTextElement = webDriver.findElement(By.id("city-center-dist"));
+		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
+		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
+		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
+
+		String defaultDistance = nearestCityTextElement.getAttribute("value");
+		String defaultLatLng = latLngTextElement.getAttribute("value");
+		String defaultCity = cityTextElement.getAttribute("value");
+
+		getCurLocBut.click();
+		// waiting until the latitude and longtitude is calculated
+		waiter.until(createConditionForValueChange(By.id("latlng"), defaultLatLng));
+
+		getCurCityBtn.click();
+
+		// waiting until the city is shown on the page
+		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
+
+		getNearestCityCenterDistanceBut.click();
+		// waiting until the distance to nearest city center is shown on the page
+		waiter.until(createConditionForValueChange(By.id("city-center-dist"), defaultDistance));
+
+		String distanceOnPageStr = nearestCityTextElement.getAttribute("value");
+		double distanceOnPage = Double.parseDouble(distanceOnPageStr.substring(0, distanceOnPageStr.indexOf(' ')));
+
+		System.out.println("distance: "  + distanceOnPage);
+		boolean distanceIsCorrect = Math.abs(distanceOnPage - realDistanceToIstanbulCenter) < epsilon;
+		Assert.assertTrue("Distance to city center: " + distanceOnPage, distanceIsCorrect);
+	}
+	@Test
+	void tryGetNearestCityDistanceWithCurrentCoordinatesWithoutGettingNearestCity() throws InterruptedException {
+		clearThePage();
+		WebElement getCurLocBut = webDriver.findElement(By.id("getCurLoc"));
+		WebElement getNearestCityCenterDistanceBut = webDriver.findElement(By.id("city-current-distance"));
 		WebElement nearestCityTextElement = webDriver.findElement(By.id("city-center-dist"));
 		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
 
@@ -146,14 +180,15 @@ class GpsTestApplicationTests {
 		// waiting until the latitude and longtitude is calculated
 		waiter.until(createConditionForValueChange(By.id("latlng"), defaultLatLng));
 
-		getNearestCityBut.click();
-		// waiting until city is shown on the page
-		waiter.until(createConditionForValueChange(By.id("city-center-dist"), defaultDistance));
+		getNearestCityCenterDistanceBut.click();
+		Thread.sleep(1000);
 
-		String distanceOnPageStr = nearestCityTextElement.getAttribute("value");
-		double distanceOnPage = Double.parseDouble(distanceOnPageStr.substring(0, distanceOnPageStr.indexOf(' ')));
-		boolean distanceIsCorrect = Math.abs(distanceOnPage - realDistanceToIstanbulCenter) < epsilon;
-		Assert.assertTrue("Distance to city center: " + distanceOnPage, distanceIsCorrect);
+		Alert geocoderAlert  = webDriver.switchTo().alert();
+		String alertText = geocoderAlert.getText();
+		System.out.println(alertText);
+
+		boolean alertIsCorrect = alertText.equals("Geocoder failed due to: ZERO_RESULTS");
+		Assert.assertTrue(alertIsCorrect);
 	}
 
 	@Test
@@ -184,33 +219,47 @@ class GpsTestApplicationTests {
 		Assert.assertTrue(diffIsIgnorable);
 	}
 
-//	@Test
-//	void tryGetNearestCityDistanceWithManuelCoordinates() {
-//		tryNearestCityManuel("...", ".....");
-//		tryNearestCityManuel("...", ".....");
-//		tryNearestCityManuel("...", ".....");
-//		tryNearestCityManuel("...", ".....");
-//	}
+	@Test
+	void tryGetNearestCityDistanceWithManuelCoordinates() {
+		tryNearestCityManuel("37.82", "32.59", 10462.844570284435);
+		tryNearestCityManuel("40.5", "35", 6798.574666380996);
+		tryNearestCityManuel("38.7", "28.8", 119513.7991236266);
+		tryNearestCityManuel("37.77", "27.15", 117654.13008119793);
+		tryNearestCityManuel("38.43", "26.84", 26418.024861855563);
+	}
 
-//	private void tryNearestCityManuel(String lat, String lng){
-//		clearThePage();
-//		WebElement latLngInputArea = webDriver.findElement(By.id("latlng"));
-//		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
-//
-//
-//		String defaultCity = cityTextElement.getAttribute("value");
-//
-//
-//		getCurrCityBut.click();
-//		// waiting until city is shown on the page
-//		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
-//
-//		String cityOnPage = cityTextElement.getAttribute("value");
-//		boolean cityIsCorrect = realCity.equals(cityOnPage);
-//		Assert.assertTrue("City: " + cityOnPage,cityIsCorrect);
-//	}
-//
-//
+	private void tryNearestCityManuel(String lat, String lng, double realDistanceToCityCenter){
+		clearThePage();
+		WebElement getNearestCityCenterDistanceBut = webDriver.findElement(By.id("city-current-distance"));
+		WebElement nearestCityTextElement = webDriver.findElement(By.id("city-center-dist"));
+		WebElement latLngTextElement = webDriver.findElement(By.id("latlng"));
+		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
+		WebElement cityTextElement = webDriver.findElement(By.id("current-city-result"));
+
+		String defaultDistance = nearestCityTextElement.getAttribute("value");
+		String defaultCity = cityTextElement.getAttribute("value");
+
+
+		latLngTextElement.clear();
+		latLngTextElement.sendKeys(lat+","+lng);
+		getCurCityBtn.click();
+
+		// waiting until the city is shown on the page
+		waiter.until(createConditionForValueChange(By.id("current-city-result"), defaultCity));
+
+		getNearestCityCenterDistanceBut.click();
+		// waiting until the distance to nearest city center is shown on the page
+		waiter.until(createConditionForValueChange(By.id("city-center-dist"), defaultDistance));
+
+		String distanceOnPageStr = nearestCityTextElement.getAttribute("value");
+		double distanceOnPage = Double.parseDouble(distanceOnPageStr.substring(0, distanceOnPageStr.indexOf(' ')));
+
+		System.out.println("distance: "  + distanceOnPage);
+		boolean distanceIsCorrect = Math.abs(distanceOnPage - realDistanceToCityCenter) < epsilon;
+		Assert.assertTrue("Distance to city center: " + distanceOnPage, distanceIsCorrect);
+	}
+
+
 	@Test
 	void tryGetEarthCenterDistanceWithManuelCoordinates() {
 		tryEarthCenterDistanceManuel("37.82", "32.59", 6371142.175960994);
