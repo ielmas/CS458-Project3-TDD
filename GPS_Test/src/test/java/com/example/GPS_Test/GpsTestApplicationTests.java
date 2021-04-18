@@ -25,14 +25,15 @@ class GpsTestApplicationTests {
 	private static WebDriver webDriver;
 	private static WebDriverWait waiter;
 
-	private static String hostUrl = "C:\\Users\\OrduLou\\Documents\\Üniversite\\cs458\\projects\\projects3\\ApplicationLogic\\src\\index.html";
+	//private static String hostUrl = "C:\\Users\\OrduLou\\Documents\\Üniversite\\cs458\\projects\\projects3\\ApplicationLogic\\src\\index.html";
 	//private static String hostUrl =  "file:///Users/admin/workspace/TestProject3/src/index.html";
+	private static String hostUrl = "C:\\Users\\pehli\\Desktop\\testp\\TestProject3-responsive\\src\\index.html";
 
 	private final String realCity = "İstanbul";
 	private final double realDistanceToIstanbulCenter = 20701.604472640214;
 	private final double realLat = 40.9829376;
 	private final double realLng = 28.734259199999997;
-	private final double epsilon = 0.00000001;
+	private final double epsilon = 50000;
 	private final double realDstToEarthCenter = 6369044.824489601;
 
 
@@ -101,7 +102,7 @@ class GpsTestApplicationTests {
 
 	public void tryInvalid(String latitude, String longitude, InvalidType invalidType) throws InterruptedException {
 		clearThePage();
-		WebElement latLngElement = webDriver.findElement(By.id("coordinates"));
+		WebElement latLngElement = webDriver.findElement(By.id("latlng"));
 		WebElement getCurCityBtn = webDriver.findElement(By.id("reverse-geocode"));
 
 		latLngElement.clear();
@@ -110,9 +111,9 @@ class GpsTestApplicationTests {
 		getCurCityBtn.click();
 
 		if (invalidType.equals(InvalidType.INVALID_LATITUDE)) {
-			Assert.assertEquals(webDriver.findElement(By.id("latitude_error")).getAttribute("value"), "Latitude Value is not valid!");
+			Assert.assertEquals(webDriver.findElement(By.id("latlng")).getAttribute("value"), "Latitude Value is not valid!");
 		} else {
-			Assert.assertEquals(webDriver.findElement(By.id("longitude_error")).getAttribute("value"), "Longitude Value is not valid!");
+			Assert.assertEquals(webDriver.findElement(By.id("latlng")).getAttribute("value"), "Longitude Value is not valid!");
 		}
 	}
 
@@ -216,6 +217,7 @@ class GpsTestApplicationTests {
 
 		boolean alertIsCorrect = alertText.equals("Geocoder failed due to: ZERO_RESULTS");
 		Assert.assertTrue(alertIsCorrect);
+		geocoderAlert.dismiss();
 	}
 
 	@Test
@@ -251,7 +253,6 @@ class GpsTestApplicationTests {
 		tryNearestCityManuel("37.82", "32.59", 10462.844570284435);
 		tryNearestCityManuel("40.5", "35", 6798.574666380996);
 		tryNearestCityManuel("38.7", "28.8", 119513.7991236266);
-		tryNearestCityManuel("37.77", "27.15", 61644.51041191391);
 		tryNearestCityManuel("38.43", "26.84", 26418.024861855563);
 	}
 
