@@ -1,0 +1,20 @@
+#map{
+	height: 400px;
+	width: 100%;
+}
+#getCurLoc{
+	
+	margin-top: 15px;
+	color: red;
+	background: white;
+}
+
+#latlng{
+	
+	width: 250px;
+}
+
+#city-center-dist{
+	
+	width: 250px;
+}
